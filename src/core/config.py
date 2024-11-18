@@ -16,9 +16,7 @@ class Settings(BaseSettings):
     ACTUAL_TIMEZONE: str
 
     CLIENT_ORIGIN: str
-    SL_API_PASSWORD: str
-    SL_API_SALT: str
-
+    
     class Config:
         env_file = "./.env"
 

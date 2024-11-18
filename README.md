@@ -35,8 +35,7 @@ This project is an API developed with **FastAPI** to manage bank accounts, payme
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your_username/your_repository.git
-   cd your_repository/api
+   git clone https://github.com/diego200052/Challenge-API
 2. Create and activate a virtual environment:
    ```bash
    python3 -m venv env
@@ -48,7 +47,17 @@ This project is an API developed with **FastAPI** to manage bank accounts, payme
 4. Run database migrations:
    ```bash
    alembic upgrade head
-5. Start the server:
+5. Configure environment variables:
+    ```bash
+    DATABASE_PORT
+    DATABASE_USER
+    DATABASE_PASSWORD
+    DATABASE_NAME
+    DATABASE_HOST
+    DATABASE_HOSTNAME
+    ACTUAL_TIMEZONE
+    CLIENT_ORIGIN
+1. Start the server:
    ```bash
    sh run.sh
 ## Licence
