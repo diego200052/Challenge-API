@@ -1,0 +1,165 @@
+from core.database import Base
+from sqlalchemy import Numeric, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+from decimal import Decimal
+
+class BankAccount(Base):
+    __tablename__ = 'bank_accounts'
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    account_name: Mapped[str] = mapped_column(String(512), nullable = False)
+    bank_name: Mapped[str] = mapped_column(String(255), nullable = False)
+    account_number: Mapped[str] = mapped_column(String(50), nullable = False)
+    current_balance: Mapped[Decimal] = mapped_column(Numeric(24, 4), nullable = False)
+    currency: Mapped[str] = mapped_column(String(20), nullable = False)
+
+    payments = relationship('Payment', foreign_keys='Payment.bank_account_id', back_populates='account_details')
+
+    from core.database import Base
+from sqlalchemy import Numeric, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+from decimal import Decimal
+
+class ExpenseItem(Base):
+    __tablename__ = 'expenses_items'
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    expense_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("expenses.id"), name='expense_id', nullable=False)
+    item_name: Mapped[str] = mapped_column(String(512), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=True)
+
+    expense = relationship('Expense', foreign_keys=[expense_id], back_populates='items')
+
+    from core.database import Base
+from sqlalchemy import TIMESTAMP, Numeric, ForeignKey, String, Integer, Text, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+from decimal import Decimal
+from datetime import date
+
+class Expense(Base):
+    __tablename__ = 'expenses'
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True)
+    expense_date: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), nullable = False, server_default=func.now())
+    description: Mapped[str] = mapped_column(Text, nullable = True)
+    due_date: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), nullable = True)
+    total_cost: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable = False)
+    recipient_account: Mapped[str] = mapped_column(String(50), nullable = True)
+    status: Mapped[int] = mapped_column(Integer, nullable = False)
+    provider_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("providers.id"), name='provider_id_fk', nullable = True)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), name='created_by_fk', nullable = False)
+    approved_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), name='approved_by_fk', nullable = True)
+    payment_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("payments.id"), name='payment_fk', nullable=True)
+
+    provider = relationship('Provider', foreign_keys=[provider_id], back_populates='expenses')
+    creator = relationship('User', foreign_keys=[created_by], back_populates='created_expenses')
+    approver = relationship('User', foreign_keys=[approved_by], back_populates='approved_expenses')
+    payment = relationship('Payment', foreign_keys=[payment_id], back_populates='expenses_payment')
+    items = relationship('ExpenseItem', foreign_keys='ExpenseItem.expense_id', back_populates='expense')
+
+    from core.database import Base
+from sqlalchemy import TIMESTAMP, Numeric, ForeignKey, Integer, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+from decimal import Decimal
+from datetime import date
+
+class Payment(Base):
+    __tablename__ = 'payments'
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    payment_date: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=True)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    status: Mapped[int] = mapped_column(Integer, nullable=False)
+    bank_account_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("bank_accounts.id"), name='bank_account_id_fk', nullable=True)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), name='created_by_fk', nullable=False)
+    approved_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), name='approved_by_fk', nullable=True)
+    executed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), name='executed_by_fk', nullable=True)
+
+    account_details = relationship('BankAccount', foreign_keys=[bank_account_id], back_populates='payments')
+    creator = relationship('User', foreign_keys=[created_by], back_populates='created_payments')
+    approver = relationship('User', foreign_keys=[approved_by], back_populates='approved_payments')
+    executor = relationship('User', foreign_keys=[executed_by], back_populates='executed_payments')
+    expenses_payment = relationship('Expense', foreign_keys='Expense.payment_id', back_populates='payment')
+
+    from core.database import Base
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+
+class Provider(Base):
+    __tablename__ = 'providers'
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    name: Mapped[str] = mapped_column(String(512), nullable=False)
+    phone: Mapped[str] = mapped_column(String(50), nullable=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=True)
+    address: Mapped[str] = mapped_column(String(1024), nullable=True)
+
+    expenses = relationship('Expense', foreign_keys='Expense.provider_id', back_populates='provider')
+
+    from core.database import Base
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+
+class Role(Base):
+    __tablename__ = 'roles'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    name: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(512), nullable=True)
+
+    user_roles = relationship("UserRole", back_populates="role", foreign_keys='UserRole.role_id')
+
+    from core.database import Base
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
+
+class UserRole(Base):
+    __tablename__ = 'users_roles'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), name='user_id_fk', nullable=False)
+    role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("roles.id"), name='role_id_fk', nullable=False)
+
+    # Restricción para que la combinación de user_id y role_id sea única
+    __table_args__ = (UniqueConstraint('user_id_fk', 'role_id_fk', name='uix_user_role'),)
+
+    # Propiedades para acceder a los datos relacionados del Role
+    role_name = property(lambda self: self.role.name)
+    role_description = property(lambda self: self.role.description)
+
+    # Relaciones con User y Role para establecer la asociación bidireccional
+    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
+    role = relationship("Role", foreign_keys=[role_id], back_populates="user_roles")
+
+    from core.database import Base
+from sqlalchemy import TIMESTAMP, String, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+from datetime import date
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    username: Mapped[str] = mapped_column(String(255), nullable=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=True)
+    password: Mapped[str] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), nullable=True, server_default=func.now())
+
+    user_roles = relationship("UserRole", back_populates="user", foreign_keys='UserRole.user_id')
+    created_expenses = relationship('Expense', back_populates='creator', foreign_keys='Expense.created_by')
+    approved_expenses = relationship('Expense', back_populates='approver', foreign_keys='Expense.approved_by')
+    created_payments = relationship('Payment', back_populates='creator', foreign_keys='Payment.created_by')
+    approved_payments = relationship('Payment', back_populates='approver', foreign_keys='Payment.approved_by')
+    executed_payments = relationship('Payment', back_populates='executor', foreign_keys='Payment.executed_by')

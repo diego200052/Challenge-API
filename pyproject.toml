@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "programadorjr-prueba-api"
+version = "0.1.0"
+description = "API for registering and tracking company expenses and payments."
+authors = ["Diego Medina <diegorm.medina@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.5"
+pydantic = "^2.9.2"
+loguru = "^0.7.2"
+SQLAlchemy = "^2.0.36"
+pre-commit = "^4.0.1"
+python-dotenv = "^1.0.1"
+pydantic-settings = "^2.6.1"
+pytz = "^2024.2"
+uvicorn = "^0.32.0"
+alembic = "^1.14.0"
+psycopg2-binary = "^2.9.10"
+ruff = "^0.3.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
